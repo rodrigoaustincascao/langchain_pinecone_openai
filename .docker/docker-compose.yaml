@@ -1,0 +1,45 @@
+version: '3.8'
+# =======================
+# URLs 
+# Ollama = http://ollama:11434
+# =======================
+services:
+  app_llm:
+    image: continuumio/anaconda3
+    volumes:
+       - ../:/opt/notebooks
+    ports:
+      - "8888:8888"
+    command:
+      /bin/bash -c "/opt/conda/bin/conda install jupyter -y --quiet && /opt/conda/bin/jupyter notebook --notebook-dir=/opt/notebooks --ip='0.0.0.0' --port=8888 --no-browser --allow-root"
+    tty: true
+    networks:
+      - app_streamlit-docker
+  
+  
+  app_llm_ollama:
+    volumes:
+      - app_llm_ollama:/root/.ollama
+    container_name: app_llm_ollama
+    pull_policy: always
+    tty: true
+    restart: unless-stopped
+    image: ollama/ollama:latest
+    ports:
+      - 11430:11434
+    networks:
+      - app_streamlit-docker
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+ 
+networks:
+  app_streamlit-docker:
+    external: false
+volumes:
+  app_llm_ollama: {}
